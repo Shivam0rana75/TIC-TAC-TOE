@@ -8,8 +8,9 @@ function App() {
     const [gameTurn, setgameTurn] = useState([]);
     const [activePlayer, setactivePlayer] = useState('O');
     const [winner, setWinner] = useState(null);
+    const [isDraw, setIsDraw] = useState(false); // ✅ New state for draw
 
-    // Initialize a 3x3 game board based on the turns
+    // Initialize a 3x3 game board from gameTurn data
     const gameboard = Array(3).fill(null).map(() => Array(3).fill(null));
 
     for (const turn of gameTurn) {
@@ -18,7 +19,7 @@ function App() {
         gameboard[row][col] = player;
     }
 
-    // Check for a winner
+    // Check for a winner or a draw
     useEffect(() => {
         for (const combination of winningConditions) {
             const first = gameboard[combination[0].row][combination[0].column];
@@ -30,10 +31,16 @@ function App() {
                 return;
             }
         }
-    }, [gameTurn]); // Runs when gameTurn updates
+
+        // ✅ Check for Draw (if board is full and no winner)
+        const isBoardFull = gameboard.every(row => row.every(cell => cell !== null));
+        if (isBoardFull && !winner) {
+            setIsDraw(true);
+        }
+    }, [gameTurn, winner]); // Runs when gameTurn updates
 
     function handleSelectSquare(rowIndex, colIndex) {
-        if (winner || gameboard[rowIndex][colIndex] !== null) return; // Prevent moves after win
+        if (winner || isDraw || gameboard[rowIndex][colIndex] !== null) return; // ✅ Prevent moves after game ends
 
         setgameTurn(prevTurns => {
             return [{ 
@@ -53,6 +60,7 @@ function App() {
                     <Player name="PLAYER 2" symbol="X" isActive={activePlayer === 'X'} />
                 </ol>
                 {winner && <p className="winner-message">🎉 {winner} Wins! 🎉</p>}
+                {isDraw && !winner && <p className="draw-message">🤝 It's a Draw! 🤝</p>}
                 <GameBoard onSelectSquare={handleSelectSquare} board={gameboard} />
             </div>
             <Log Turns={gameTurn} />
